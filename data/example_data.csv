@@ -1,9 +1,9 @@
-nombre_estudio,grupo,formulacion,parametro_metabolico,tiempo_semanas,n,media_base,desviacion_estandar_base,media,desviacion_estandar,sobrepeso_obesidad,imc_media,imc_de
-Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,IMC (kg/m2),12,30,27.40,4.39,26.49,3.91,si,27.49,4.39
-Gul_2025,comparacion,2g Metformina,IMC (kg/m2),12,30,25.73,2.67,24.33,2.65,si,25.73,2.67
-Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,Glucosa (mg/dL),12,30,94.07,12.74,84.07,12.41,si,27.49,4.39
-Gul_2025,comparacion,2g Metformina,Glucosa (mg/dL),12,30,89.26,10.42,84.19,7.49,si,25.73,2.67
-Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,Insulina (µU/mL),12,30,13.18,11.46,5.60,4.98,si,27.49,4.39
-Gul_2025,comparacion,2g Metformina,Insulina (µU/mL),12,30,20.95,6.18,14.12,5.44,si,25.73,2.67
-Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,HOMA-IR,12,30,3.02,2.40,1.26,1.12,si,27.49,4.39
-Gul_2025,comparacion,2g Metformina,HOMA-IR,12,30,4.80,1.71,3.252,1.70,si,25.73,2.67
+study_id,group_type,treatment_formulation,metabolic_parameter,duration_weeks,sample_size,baseline_mean,baseline_sd,post_mean,post_sd,has_obesity,baseline_bmi_mean,baseline_bmi_sd,mean_difference,percent_change,effect_size_category
+Gul_2025,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,bmi_kg_m2,12,30,27.40,4.39,26.49,3.91,yes,27.40,4.39,-0.91,-3.32,small
+Gul_2025,control,metformin_2000mg,bmi_kg_m2,12,30,25.73,2.67,24.33,2.65,yes,25.73,2.67,-1.40,-5.44,small
+Gul_2025,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,glucose_mg_dl,12,30,94.07,12.74,84.07,12.41,yes,27.40,4.39,-10.00,-10.63,medium
+Gul_2025,control,metformin_2000mg,glucose_mg_dl,12,30,89.26,10.42,84.19,7.49,yes,25.73,2.67,-5.07,-5.68,small
+Gul_2025,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,insulin_uU_ml,12,30,13.18,11.46,5.60,4.98,yes,27.40,4.39,-7.58,-57.51,large
+Gul_2025,control,metformin_2000mg,insulin_uU_ml,12,30,20.95,6.18,14.12,5.44,yes,25.73,2.67,-6.83,-32.62,medium
+Gul_2025,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,homa_ir,12,30,3.02,2.40,1.26,1.12,yes,27.40,4.39,-1.76,-58.28,large
+Gul_2025,control,metformin_2000mg,homa_ir,12,30,4.80,1.71,3.25,1.70,yes,25.73,2.67,-1.55,-32.29,medium
