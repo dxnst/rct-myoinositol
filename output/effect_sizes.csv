@@ -1,0 +1,6 @@
+study,parameter,effect_size,obesity
+Estudio_A,IMC,-1.6999999999999993,si
+Estudio_B,glucosa_ayunas,-5.5,no
+Estudio_C,insulina_basal,-4.300000000000001,si
+Estudio_D,HOMA_IR,-1.1,no
+Estudio_E,testosterona_libre,-2.2,si
