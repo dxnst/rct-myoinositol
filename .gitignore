@@ -1,0 +1,51 @@
+# R and RStudio files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# R package build files
+*.tar.gz
+*.tgz
+
+# Temporary files
+*~
+.DS_Store
+Thumbs.db
+
+# Output files that might be generated
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.html
+
+# Logs
+*.log
+
+# Data files (may contain sensitive information)
+# Uncomment if data should not be committed
+# data/*.csv
+# data/*.xlsx
+# data/*.xls
+
+# Results and output directories (keep structure but not content)
+results/*
+!results/.gitkeep
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
