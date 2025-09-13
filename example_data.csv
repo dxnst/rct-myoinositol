@@ -1,0 +1,11 @@
+# Updated example_data.csv
+
+# Improved data structure and column names for better RStudio analysis
+
+| Sample_ID | Treatment_Group | Dose_mg | Response | Date_Collected |
+|-----------|----------------|---------|----------|----------------|
+| 1         | A              | 100     | 5.4      | 2023-01-01     |
+| 2         | A              | 150     | 6.1      | 2023-01-02     |
+| 3         | B              | 100     | 4.8      | 2023-01-01     |
+| 4         | B              | 150     | 5.0      | 2023-01-02     |
+| ...       | ...            | ...     | ...      | ...            |
