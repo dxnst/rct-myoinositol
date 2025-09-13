@@ -1,11 +1,9 @@
-nombre_estudio,grupo,formulacion,parametro_metabolico,n,media,desviacion_estandar,edad_media,obesidad
-Estudio_A,control,placebo,IMC,25,28.5,4.2,27.3,si
-Estudio_A,intervencion,mio-inositol_2g,IMC,25,26.8,3.9,27.1,si
-Estudio_B,control,placebo,glucosa_ayunas,30,95.2,12.8,29.5,no
-Estudio_B,intervencion,mio-inositol_4g,glucosa_ayunas,30,89.7,10.3,29.2,no
-Estudio_C,control,placebo,insulina_basal,20,18.5,6.2,26.8,si
-Estudio_C,intervencion,mio-inositol_2g,insulina_basal,20,14.2,4.8,26.9,si
-Estudio_D,control,placebo,HOMA_IR,35,4.2,1.8,28.7,no
-Estudio_D,intervencion,d-chiro-inositol_1g,HOMA_IR,35,3.1,1.4,28.4,no
-Estudio_E,control,placebo,testosterona_libre,28,8.9,2.3,25.6,si
-Estudio_E,intervencion,mio-inositol_4g,testosterona_libre,28,6.7,1.9,25.8,si
+nombre_estudio,grupo,formulacion,parametro_metabolico,tiempo_semanas,n,media_base,desviacion_estandar_base,media,desviacion_estandar,sobrepeso_obesidad,imc_media,imc_de
+Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,IMC (kg/m2),12,30,27.40,4.39,26.49,3.91,si,27.49,4.39
+Gul_2025,comparacion,2g Metformina,IMC (kg/m2),12,30,25.73,2.67,24.33,2.65,si,25.73,2.67
+Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,Glucosa (mg/dL),12,30,94.07,12.74,84.07,12.41,si,27.49,4.39
+Gul_2025,comparacion,2g Metformina,Glucosa (mg/dL),12,30,89.26,10.42,84.19,7.49,si,25.73,2.67
+Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,Insulina (µU/mL),12,30,13.18,11.46,5.60,4.98,si,27.49,4.39
+Gul_2025,comparacion,2g Metformina,Insulina (µU/mL),12,30,20.95,6.18,14.12,5.44,si,25.73,2.67
+Gul_2025,intervencion,1.95g mio-Inositol + 0.05g D-chiro-Inositol,HOMA-IR,12,30,3.02,2.40,1.26,1.12,si,27.49,4.39
+Gul_2025,comparacion,2g Metformina,HOMA-IR,12,30,4.80,1.71,3.252,1.70,si,25.73,2.67
