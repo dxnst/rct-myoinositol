@@ -1,0 +1,29 @@
+Package: rct-myoinositol
+Type: Project
+Title: Systematic Review of Myo-inositol Effects in PCOS
+Version: 0.1.0
+Description: Analysis workflow for systematic review and meta-analysis of 
+    randomized controlled trials examining myo-inositol supplementation 
+    effects on metabolic parameters in women with polycystic ovary syndrome.
+Authors@R: person("Daniel", "Soto", email = "dxnst@users.noreply.github.com", 
+    role = c("aut", "cre"))
+License: BSD_3_clause + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 4.0.0)
+Imports:
+    meta (>= 7.0.0),
+    metafor (>= 4.0.0),
+    forestplot (>= 3.0.0),
+    dplyr (>= 1.1.0),
+    ggplot2 (>= 3.4.0),
+    readr (>= 2.1.0),
+    readxl (>= 1.4.0),
+    tidyr (>= 1.3.0),
+    stringr (>= 1.5.0),
+    knitr (>= 1.40),
+    rmarkdown (>= 2.20)
+Suggests:
+    testthat (>= 3.0.0),
+    covr

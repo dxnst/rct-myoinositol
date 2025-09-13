@@ -1,0 +1,11 @@
+nombre_estudio,grupo,formulacion,parametro_metabolico,n,media,desviacion_estandar,edad_media,obesidad
+Example_Study_2020,control,placebo,glucose_fasting,25,95.2,8.5,28.3,non-obese
+Example_Study_2020,intervention,"2g twice daily",glucose_fasting,23,88.7,7.2,27.8,non-obese
+Example_Study_2020,control,placebo,insulin_fasting,25,12.8,3.4,28.3,non-obese
+Example_Study_2020,intervention,"2g twice daily",insulin_fasting,23,9.6,2.8,27.8,non-obese
+Example_Study_2020,control,placebo,HOMA_IR,25,3.05,0.95,28.3,non-obese
+Example_Study_2020,intervention,"2g twice daily",HOMA_IR,23,2.12,0.76,27.8,non-obese
+Another_Study_2019,control,placebo,glucose_fasting,30,98.5,12.1,32.1,obese
+Another_Study_2019,intervention,"4g once daily",glucose_fasting,28,92.3,9.8,31.5,obese
+Another_Study_2019,control,placebo,insulin_fasting,30,18.2,5.6,32.1,obese
+Another_Study_2019,intervention,"4g once daily",insulin_fasting,28,14.7,4.2,31.5,obese
