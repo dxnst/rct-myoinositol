@@ -3,6 +3,9 @@
 # *.pdf
 # *.svg
 
+# Generated results directory
+resultados/
+
 # R specific
 .Rhistory
 .RData

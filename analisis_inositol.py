@@ -183,7 +183,7 @@ def calcular_efecto_neto(intervention_row, control_row):
 # Función para calcular el efecto combinado (meta-análisis) utilizando el método de efectos aleatorios
 def calcular_efecto_combinado(data):
     if len(data) < 2:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     
     # Calcular varianzas
     variances = data['error_estandar'] ** 2
@@ -338,7 +338,7 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     plot_data = plot_data.sort_values('efecto', ascending=False)
     
     # Crear figura
-    fig, ax = plt.figure(figsize=(15, max(10, len(plot_data) * 0.7))), plt.gca()
+    fig, ax = plt.figure(figsize=(15, max(8, len(plot_data) * 0.5))), plt.gca()
     
     # Posiciones Y
     y_positions = np.arange(len(plot_data))
@@ -361,32 +361,6 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     
     # Línea vertical en cero
     ax.axvline(x=0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5)
-    
-    # Añadir zonas de interpretación con etiquetas mejoradas
-    ax.axvspan(-0.2, 0.2, alpha=0.1, color='gray')
-    ax.text(0, -1.5, "Efecto insignificante", ha='center', fontsize=10, 
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
-    ax.axvspan(-0.5, -0.2, alpha=0.1, color='lightblue')
-    ax.axvspan(0.2, 0.5, alpha=0.1, color='lightblue')
-    ax.text(-0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
-    ax.axvspan(-0.8, -0.5, alpha=0.1, color='lightgreen')
-    ax.axvspan(0.5, 0.8, alpha=0.1, color='lightgreen')
-    ax.text(-0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
-    ax.axvspan(-4, -0.8, alpha=0.1, color='#ffb6c1')
-    ax.axvspan(0.8, 4, alpha=0.1, color='#ffb6c1')
-    ax.text(-1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Etiquetas para los estudios
     labels = []
