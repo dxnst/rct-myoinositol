@@ -1,9 +1,0 @@
-Parámetro,Tipo Tratamiento,Obesidad,Estudios,Participantes,Tamaño Efecto,Cambio Absoluto,Cambio %,Estudios Significativos,% Significativos
-Testosterona (ng/mL),MI,No,2,45,0.06,-0.20,-24.7%,0,0.0%
-Testosterona (ng/mL),MI+DCI,No,1,36,-0.27,-0.02,-4.1%,0,0.0%
-Testosterona (ng/mL),TODOS,No,3,81,-0.09,-0.12,-15.5%,0,0.0%
-Testosterona (ng/mL),DCI,Sí,2,54,0.26,-0.04,-12.8%,2,100.0%
-Testosterona (ng/mL),MI,Sí,2,65,0.03,-0.12,-23.5%,0,0.0%
-Testosterona (ng/mL),MI+DCI,Sí,2,75,-0.12,0.03,2.2%,2,100.0%
-Testosterona (ng/mL),MI+MET,Sí,2,112,-0.06,-0.17,-18.4%,0,0.0%
-Testosterona (ng/mL),TODOS,Sí,8,306,0.00,-0.09,-13.5%,4,50.0%

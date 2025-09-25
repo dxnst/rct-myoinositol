@@ -1,9 +1,0 @@
-Parámetro,Tipo Tratamiento,Obesidad,Estudios,Participantes,Tamaño Efecto,Cambio Absoluto,Cambio %,Estudios Significativos,% Significativos
-HOMA-IR,MI,No,1,15,-0.02,-0.29,-13.9%,0,0.0%
-HOMA-IR,MI+DCI,No,1,36,-0.35,-1.36,-30.6%,0,0.0%
-HOMA-IR,TODOS,No,2,51,-0.26,-1.05,-25.7%,0,0.0%
-HOMA-IR,DCI,Sí,2,54,-0.26,-1.04,-24.7%,0,0.0%
-HOMA-IR,MI,Sí,5,162,-0.13,-0.90,-19.8%,0,0.0%
-HOMA-IR,MI+DCI,Sí,2,56,-0.07,-1.99,-51.3%,0,0.0%
-HOMA-IR,MI+MET,Sí,3,137,-0.21,-1.10,-34.1%,1,33.3%
-HOMA-IR,TODOS,Sí,12,409,-0.16,-1.14,-29.5%,1,8.3%
