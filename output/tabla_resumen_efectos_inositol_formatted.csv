@@ -1,0 +1,9 @@
+Variable Analizada,Nº Estudios,Tamaño Muestra,Diferencia Medias Pre-Post,Tamaño Efecto (g Hedges),Interpretación Efecto,Intervalo Confianza 95%
+Días del ciclo menstrual,1,24,-4.0,1.684,Grande,"[0.944, 2.423]"
+Puntuación Ferriman-Gallwey,3,53,2.3,1.18,Grande,"[0.433, 1.927]"
+Volumen ovárico (mL),9,358,4.44,1.078,Grande,"[0.564, 1.591]"
+Insulina (μU/mL),27,903,3.98,1.059,Grande,"[0.462, 1.657]"
+Glucosa (mg/dL),27,891,6.65,0.945,Grande,"[0.281, 1.608]"
+Testosterona (ng/mL),19,579,0.1,0.935,Grande,"[0.227, 1.644]"
+HOMA-IR,21,658,1.42,0.921,Grande,"[0.348, 1.494]"
+IMC (kg/m²),28,900,1.28,0.502,Moderado,"[-0.014, 1.017]"
