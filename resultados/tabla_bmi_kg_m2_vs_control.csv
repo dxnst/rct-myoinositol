@@ -1,0 +1,9 @@
+Parámetro,Tipo Tratamiento,Obesidad,Estudios,Participantes,Tamaño Efecto,Cambio Absoluto,Cambio %,Estudios Significativos,% Significativos
+IMC (kg/m²),MI,No,3,98,0.23,-0.81,-3.2%,0,0.0%
+IMC (kg/m²),MI+DCI,No,1,36,-0.32,-1.95,-7.7%,0,0.0%
+IMC (kg/m²),TODOS,No,4,134,0.08,-1.12,-4.4%,0,0.0%
+IMC (kg/m²),DCI,Sí,1,24,0.16,-1.35,-4.6%,0,0.0%
+IMC (kg/m²),MI,Sí,10,364,0.06,-1.19,-4.3%,1,10.0%
+IMC (kg/m²),MI+DCI,Sí,4,114,0.02,-1.16,-4.0%,0,0.0%
+IMC (kg/m²),MI+MET,Sí,2,82,-0.01,-2.08,-7.5%,0,0.0%
+IMC (kg/m²),TODOS,Sí,17,584,0.05,-1.32,-4.7%,1,5.9%

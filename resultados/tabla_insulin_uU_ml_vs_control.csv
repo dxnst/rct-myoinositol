@@ -1,0 +1,9 @@
+Parámetro,Tipo Tratamiento,Obesidad,Estudios,Participantes,Tamaño Efecto,Cambio Absoluto,Cambio %,Estudios Significativos,% Significativos
+Insulina (μU/mL),MI,No,4,128,-0.76,-5.48,-26.4%,1,25.0%
+Insulina (μU/mL),MI+DCI,No,1,36,-0.34,-5.65,-27.8%,0,0.0%
+Insulina (μU/mL),TODOS,No,5,164,-0.67,-5.52,-26.7%,1,20.0%
+Insulina (μU/mL),DCI,Sí,2,54,-0.30,-3.78,-22.8%,0,0.0%
+Insulina (μU/mL),MI,Sí,8,294,0.02,-2.23,-15.7%,0,0.0%
+Insulina (μU/mL),MI+DCI,Sí,2,56,0.02,-7.29,-45.4%,0,0.0%
+Insulina (μU/mL),MI+MET,Sí,3,137,-0.14,-3.18,-25.0%,0,0.0%
+Insulina (μU/mL),TODOS,Sí,15,541,-0.05,-3.15,-21.8%,0,0.0%

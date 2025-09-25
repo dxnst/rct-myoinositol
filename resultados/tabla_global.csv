@@ -1,0 +1,6 @@
+Parámetro,Estudios,Participantes,Efecto Global,IC 95% Inferior,IC 95% Superior,Valor p,I²,Cambio Medio,Cambio %,Estudios Sig.,% Significativos
+IMC (kg/m²),21,718,0.05,-0.05,0.16,0.3272,0.0%,-1.28,-4.6%,1,4.8%
+Puntuación Ferriman-Gallwey,3,53,0.19,-0.17,0.55,0.2966,0.0%,-2.30,-21.6%,0,0.0%
+Glucosa (mg/dL),18,649,-0.07,-0.19,0.06,0.2970,19.0%,-6.58,-6.9%,0,0.0%
+HOMA-IR,14,460,-0.17,-0.30,-0.04,0.0090,0.0%,-1.13,-29.1%,1,7.1%
+Insulina (μU/mL),20,705,-0.17,-0.37,0.04,0.1117,72.3%,-3.70,-23.0%,1,5.0%
