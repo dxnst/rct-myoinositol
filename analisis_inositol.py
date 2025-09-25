@@ -322,7 +322,7 @@ for parametro in df['metabolic_parameter'].unique():
 # Convertir a DataFrame
 results_df = pd.DataFrame(resultados)
 
-# Crear función para generar gráfico de bosque (forest plot) mejorado con efecto combinado
+# Función para generar gráfico de bosque (forest plot)
 def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, color_by='tipo_tratamiento'):
     # Filtrar datos
     if comparacion:
@@ -337,8 +337,8 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     # Ordenar por tamaño del efecto
     plot_data = plot_data.sort_values('efecto', ascending=False)
     
-    # Crear figura
-    fig, ax = plt.figure(figsize=(15, max(10, len(plot_data) * 0.7))), plt.gca()
+    # Crear figura - REDUCIDO el factor de escala vertical de 0.7 a 0.4
+    fig, ax = plt.figure(figsize=(15, max(7, len(plot_data) * 0.4))), plt.gca()
     
     # Posiciones Y
     y_positions = np.arange(len(plot_data))
@@ -356,37 +356,20 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
         # Línea para CI
         ax.plot([row['ci_inferior'], row['ci_superior']], [i, i], 
                 color=colors[i], linewidth=2.5, alpha=0.8)
-        # Punto para efecto
-        ax.scatter(row['efecto'], i, color=colors[i], s=120, zorder=3, edgecolor='black', linewidth=1)
+        # REDUCIDO el tamaño del punto de 120 a 90
+        ax.scatter(row['efecto'], i, color=colors[i], s=90, zorder=3, edgecolor='black', linewidth=1)
     
     # Línea vertical en cero
     ax.axvline(x=0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5)
     
-    # Añadir zonas de interpretación con etiquetas mejoradas
+    # Añadir zonas de interpretación (sin las etiquetas)
     ax.axvspan(-0.2, 0.2, alpha=0.1, color='gray')
-    ax.text(0, -1.5, "Efecto insignificante", ha='center', fontsize=10, 
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
     ax.axvspan(-0.5, -0.2, alpha=0.1, color='lightblue')
     ax.axvspan(0.2, 0.5, alpha=0.1, color='lightblue')
-    ax.text(-0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
     ax.axvspan(-0.8, -0.5, alpha=0.1, color='lightgreen')
     ax.axvspan(0.5, 0.8, alpha=0.1, color='lightgreen')
-    ax.text(-0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
     ax.axvspan(-4, -0.8, alpha=0.1, color='#ffb6c1')
     ax.axvspan(0.8, 4, alpha=0.1, color='#ffb6c1')
-    ax.text(-1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    ax.text(1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
-           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Etiquetas para los estudios
     labels = []
@@ -397,7 +380,7 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
             label = f"{row['estudio']} ({row['tipo_tratamiento']})"
         labels.append(label)
     
-    # Añadir etiquetas y detalles
+    # Añadir etiquetas y detalles - CORREGIDO el solapamiento modificando los offsets verticales
     for i, (_, row) in enumerate(plot_data.iterrows()):
         # Texto con valor de efecto e intervalo de confianza
         effect_text = f"g = {row['efecto']:.2f} [{row['ci_inferior']:.2f}, {row['ci_superior']:.2f}]"
@@ -417,15 +400,19 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
             text_pos = row['ci_inferior'] - 0.1
             ha = 'right'
         
+        # MODIFICADOS los offset verticales para evitar solapamiento
+        # Valor de efecto (g)
         ax.text(text_pos, i, effect_text, va='center', ha=ha, fontsize=10, fontweight='bold')
-        ax.text(text_pos, i - 0.3, change_text, va='center', ha=ha, fontsize=9, color='#333333')
+        # Valor de cambio (delta) - ajustado de -0.3 a -0.22
+        ax.text(text_pos, i - 0.22, change_text, va='center', ha=ha, fontsize=9, color='#333333')
         
-        # Añadir valor p
+        # Añadir valor p - ajustado de +0.3 a +0.22
         p_text = f"p = {row['p_valor']:.4f}"
         if row['p_valor'] < 0.05:
             p_text += "*"
-            ax.axhspan(i - 0.4, i + 0.4, alpha=0.1, color='green')
-        ax.text(text_pos, i + 0.3, p_text, va='center', ha=ha, fontsize=9, color='#333333')
+            # Reducir altura del resaltado
+            ax.axhspan(i - 0.25, i + 0.25, alpha=0.1, color='green')
+        ax.text(text_pos, i + 0.22, p_text, va='center', ha=ha, fontsize=9, color='#333333')
     
     # Calcular y añadir el efecto combinado
     combined_effect, se_combined, ci_lower, ci_upper, p_value, I_squared = calcular_efecto_combinado(plot_data)
@@ -438,11 +425,12 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
         # Añadir región sombreada para el intervalo de confianza del efecto combinado
         ax.axvspan(ci_lower, ci_upper, alpha=0.2, color=COLORS['Combinado'])
         
+        # MOVIDO de -2.5 a -1.7 para reducir espacio vertical
         # Etiqueta para el efecto combinado
         combined_text = (f"Efecto Combinado: {combined_effect:.2f} [{ci_lower:.2f}, {ci_upper:.2f}], " +
                         f"p = {p_value:.4f}, I² = {I_squared:.1f}%")
         
-        ax.text(combined_effect, -2.5, combined_text, ha='center', va='center', 
+        ax.text(combined_effect, -1.7, combined_text, ha='center', va='center', 
                 fontsize=11, fontweight='bold', 
                 bbox=dict(facecolor='white', alpha=0.8, edgecolor=COLORS['Combinado'], boxstyle='round,pad=0.5'))
     
@@ -455,29 +443,31 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     param_name = PARAMETROS.get(parametro, parametro)
     ax.set_title(f"{titulo}: {param_name}", fontsize=16, fontweight='bold')
     
+    # AJUSTADAS posiciones verticales de las etiquetas de interpretación
     # Añadir interpretación según el tipo de parámetro
     if parametro in MEJORA_CON_REDUCCION:
         if comparacion:
-            ax.text(-0.5, -3.5, "Favorece al control", ha='center', fontsize=10, 
+            # Movidas de -3.5 a -2.5
+            ax.text(-0.5, -2.5, "Favorece al control", ha='center', fontsize=10, 
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
+            ax.text(0.5, -2.5, "Favorece al inositol", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
         else:
-            ax.text(-0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+            ax.text(-0.5, -2.5, "Empeoramiento", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+            ax.text(0.5, -2.5, "Mejoría", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     else:
         # Para parámetros donde el aumento es mejora
         if comparacion:
-            ax.text(-0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
+            ax.text(-0.5, -2.5, "Favorece al inositol", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Favorece al control", ha='center', fontsize=10,
+            ax.text(0.5, -2.5, "Favorece al control", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
         else:
-            ax.text(-0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+            ax.text(-0.5, -2.5, "Mejoría", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+            ax.text(0.5, -2.5, "Empeoramiento", ha='center', fontsize=10,
                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Leyenda para tipo de tratamiento
@@ -512,7 +502,7 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
         
         ax.legend(handles=legend_elements, loc='upper right', fontsize=10, framealpha=0.9)
     
-    # Límites del gráfico
+    # Límites del gráfico - REDUCIDO el límite inferior para compactar la presentación
     all_limits = np.concatenate([
         plot_data['ci_inferior'].values,
         plot_data['ci_superior'].values,
@@ -524,7 +514,8 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     
     margin = max(1.0, abs(all_limits.min()) * 0.25, abs(all_limits.max()) * 0.25)
     ax.set_xlim(min(all_limits) - margin, max(all_limits) + margin)
-    ax.set_ylim(-4.0, len(plot_data) - 0.5)
+    # AJUSTADO el límite y inferior de -4.0 a -3.0 para reducir espacio vertical
+    ax.set_ylim(-3.0, len(plot_data) - 0.5)
     
     # Añadir cuadrícula sutil
     ax.grid(True, linestyle='--', alpha=0.3)
@@ -533,182 +524,6 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     
     if filename:
         plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
-    
-    return fig
-
-
-# Crear tabla resumen por parámetro
-def crear_tabla_resumen(data, parametro, vs_control=True):
-    # Filtrar datos
-    if vs_control:
-        param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == True)]
-    else:
-        param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
-    
-    if len(param_data) < 3:
-        return None
-    
-    # Calcular estadísticas por tipo de tratamiento y estado de obesidad
-    summary_data = []
-    
-    # Para cada tipo de tratamiento
-    for tipo in param_data['tipo_tratamiento'].unique():
-        tipo_data = param_data[param_data['tipo_tratamiento'] == tipo]
-        
-        # Para cada estado de obesidad
-        for obesidad in ['Sí', 'No']:
-            obes_data = tipo_data[tipo_data['obesidad'] == obesidad]
-            
-            if len(obes_data) > 0:
-                # Calcular medias ponderadas por tamaño de muestra
-                weights = obes_data['n']
-                weighted_effect = np.average(obes_data['efecto'], weights=weights)
-                weighted_change = np.average(obes_data['cambio_absoluto'], weights=weights)
-                weighted_pct_change = np.average(obes_data['cambio_porcentual'], weights=weights)
-                
-                # Contar estudios significativos (p < 0.05)
-                sig_studies = sum(obes_data['p_valor'] < 0.05)
-                
-                summary_data.append({
-                    'Parámetro': PARAMETROS.get(parametro, parametro),
-                    'Tipo Tratamiento': tipo,
-                    'Obesidad': obesidad,
-                    'Estudios': len(obes_data),
-                    'Participantes': sum(obes_data['n']),
-                    'Tamaño Efecto': weighted_effect,
-                    'Cambio Absoluto': weighted_change,
-                    'Cambio %': weighted_pct_change,
-                    'Estudios Significativos': sig_studies,
-                    '% Significativos': (sig_studies / len(obes_data)) * 100
-                })
-    
-    # También calcular medias globales por estado de obesidad
-    for obesidad in ['Sí', 'No']:
-        obes_data = param_data[param_data['obesidad'] == obesidad]
-        
-        if len(obes_data) > 0:
-            # Calcular medias ponderadas
-            weights = obes_data['n']
-            weighted_effect = np.average(obes_data['efecto'], weights=weights)
-            weighted_change = np.average(obes_data['cambio_absoluto'], weights=weights)
-            weighted_pct_change = np.average(obes_data['cambio_porcentual'], weights=weights)
-            
-            # Contar estudios significativos
-            sig_studies = sum(obes_data['p_valor'] < 0.05)
-            
-            summary_data.append({
-                'Parámetro': PARAMETROS.get(parametro, parametro),
-                'Tipo Tratamiento': 'TODOS',
-                'Obesidad': obesidad,
-                'Estudios': len(obes_data),
-                'Participantes': sum(obes_data['n']),
-                'Tamaño Efecto': weighted_effect,
-                'Cambio Absoluto': weighted_change,
-                'Cambio %': weighted_pct_change,
-                'Estudios Significativos': sig_studies,
-                '% Significativos': (sig_studies / len(obes_data)) * 100
-            })
-    
-    # Convertir a DataFrame y ordenar
-    if summary_data:
-        summary_df = pd.DataFrame(summary_data)
-        summary_df = summary_df.sort_values(['Obesidad', 'Tipo Tratamiento'])
-        
-        # Formatear valores numéricos
-        summary_df['Tamaño Efecto'] = summary_df['Tamaño Efecto'].map(lambda x: f"{x:.2f}")
-        summary_df['Cambio Absoluto'] = summary_df['Cambio Absoluto'].map(lambda x: f"{x:.2f}")
-        summary_df['Cambio %'] = summary_df['Cambio %'].map(lambda x: f"{x:.1f}%")
-        summary_df['% Significativos'] = summary_df['% Significativos'].map(lambda x: f"{x:.1f}%")
-        
-        return summary_df
-    
-    return None
-
-# Crear gráfico comparativo de efectos por obesidad
-def crear_grafico_comparativo_obesidad(data, parametro):
-    # Filtrar datos
-    param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == True)]
-    
-    # Comprobar si hay suficientes datos
-    has_obese = len(param_data[param_data['obesidad'] == 'Sí']) > 0
-    has_non_obese = len(param_data[param_data['obesidad'] == 'No']) > 0
-    
-    if not (has_obese and has_non_obese):
-        print(f"Datos insuficientes para comparación por obesidad en {parametro}")
-        return None
-    
-    # Agrupar por obesidad y calcular estadísticas
-    grouped = param_data.groupby('obesidad')
-    
-    # Calcular medias ponderadas por tamaño de muestra
-    results = []
-    for name, group in grouped:
-        weights = group['n']
-        weighted_effect = np.average(group['efecto'], weights=weights)
-        weighted_se = np.sqrt(np.sum((weights * group['error_estandar'])**2)) / np.sum(weights)
-        
-        results.append({
-            'obesidad': name,
-            'efecto': weighted_effect,
-            'error': weighted_se,
-            'n': sum(weights),
-            'estudios': len(group)
-        })
-    
-    # Convertir a DataFrame
-    result_df = pd.DataFrame(results)
-    
-    # Crear figura
-    fig, ax = plt.subplots(figsize=(10, 7))
-    
-    # Colores
-    colors = ['#3498db', '#e74c3c']  # Azul para no obesos, rojo para obesos
-    
-    # Posiciones en X
-    x_pos = np.arange(len(result_df))
-    
-    # Graficar barras
-    bars = ax.bar(x_pos, result_df['efecto'], yerr=result_df['error'] * 1.96,
-                 width=0.6, color=colors, alpha=0.8, capsize=10, 
-                 error_kw={'elinewidth': 2, 'capthick': 2})
-    
-    # Añadir valores
-    for i, bar in enumerate(bars):
-        height = bar.get_height()
-        pos_y = height + 0.1 if height >= 0 else height - 0.25
-        ax.text(bar.get_x() + bar.get_width()/2., pos_y,
-               f"{result_df['efecto'].iloc[i]:.2f}", ha='center', fontsize=11, fontweight='bold')
-        
-        # Añadir tamaño de muestra y número de estudios
-        ax.text(bar.get_x() + bar.get_width()/2., -0.05,
-               f"n={result_df['n'].iloc[i]}\n(k={result_df['estudios'].iloc[i]})",
-               ha='center', va='top', fontsize=10)
-    
-    # Añadir línea horizontal en cero
-    ax.axhline(y=0, linestyle='--', color='gray', alpha=0.7, linewidth=1.5)
-    
-    # Etiquetas y título
-    ax.set_xticks(x_pos)
-    ax.set_xticklabels(['Pacientes sin obesidad', 'Pacientes con obesidad'], fontsize=11)
-    ax.set_ylabel('Tamaño del Efecto (g de Hedges)', fontsize=12, fontweight='bold')
-    ax.set_title(f'Comparación por IMC: {PARAMETROS.get(parametro, parametro)}', fontsize=14, fontweight='bold')
-    
-    # Añadir interpretación según el parámetro
-    if parametro in MEJORA_CON_REDUCCION:
-        ax.text(-0.5, -0.5, "Favorece al control", ha='center', fontsize=10,
-              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        ax.text(1.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
-              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    else:
-        ax.text(-0.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
-              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        ax.text(1.5, -0.5, "Favorece al control", ha='center', fontsize=10,
-              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-    
-    # Añadir cuadrícula sutil
-    ax.grid(True, linestyle='--', alpha=0.3)
-    
-    plt.tight_layout()
     
     return fig
 
@@ -960,3 +775,4 @@ for parametro in sorted(df['metabolic_parameter'].unique()):
     plt.close(fig)
 
 print("Análisis completado. Resultados guardados en el directorio 'resultados'")
+
