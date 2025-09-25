@@ -239,7 +239,7 @@ for parametro in df['metabolic_parameter'].unique():
         intervention_rows = study_data[study_data['group_type'] == 'intervention']
         control_rows = study_data[study_data['group_type'] == 'control']
         
-        # Calcular efectos para cada grupo de intervención
+        # Calcular efectos solo para cada grupo de intervención (sin comparar con control)
         for _, int_row in intervention_rows.iterrows():
             # Efecto pre-post dentro del grupo de intervención
             g_int, se_int, ci_lower_int, ci_upper_int, p_int, mean_diff_int = calcular_hedges_g(
@@ -251,7 +251,7 @@ for parametro in df['metabolic_parameter'].unique():
             # Calcular cambio porcentual
             pct_change = (int_row['post_mean'] - int_row['baseline_mean']) / int_row['baseline_mean'] * 100
             
-            # Datos para guardar
+            # Datos para guardar (solo efectos dentro del grupo de intervención)
             result_data = {
                 'estudio': int_row['study_id'],
                 'pais': int_row['country'],
@@ -276,59 +276,16 @@ for parametro in df['metabolic_parameter'].unique():
                 'n_control': None
             }
             
-            # Si hay grupo control para comparar, calcular también el efecto neto
-            if not control_rows.empty:
-                # Tomar el primer grupo control (la mayoría de los estudios tienen solo uno)
-                control_row = control_rows.iloc[0]
-                
-                # Calcular efecto neto (intervención vs control)
-                g_net, se_net, ci_lower_net, ci_upper_net, p_net, net_effect = calcular_efecto_neto(
-                    int_row, control_row
-                )
-                
-                # Efecto pre-post dentro del grupo control
-                g_ctrl, se_ctrl, ci_lower_ctrl, ci_upper_ctrl, p_ctrl, mean_diff_ctrl = calcular_hedges_g(
-                    control_row['baseline_mean'], control_row['post_mean'],
-                    control_row['baseline_sd'], control_row['post_sd'],
-                    control_row['sample_size'], control_row['metabolic_parameter']
-                )
-                
-                # Cambio porcentual en el control
-                pct_change_ctrl = (control_row['post_mean'] - control_row['baseline_mean']) / control_row['baseline_mean'] * 100
-                
-                # Añadir datos de la comparación con control
-                result_data_vs_control = result_data.copy()
-                result_data_vs_control.update({
-                    'vs_control': True,
-                    'control': control_row['treatment_formulation'],
-                    'tipo_control': clasificar_tratamiento(control_row['treatment_formulation']),
-                    'n_control': control_row['sample_size'],
-                    'valor_inicial_control': control_row['baseline_mean'],
-                    'valor_final_control': control_row['post_mean'],
-                    'cambio_absoluto_control': control_row['post_mean'] - control_row['baseline_mean'],
-                    'cambio_porcentual_control': pct_change_ctrl,
-                    'efecto': g_net,
-                    'error_estandar': se_net,
-                    'ci_inferior': ci_lower_net,
-                    'ci_superior': ci_upper_net,
-                    'p_valor': p_net
-                })
-                
-                resultados.append(result_data_vs_control)
-            
-            # Añadir los resultados del efecto dentro del grupo
+            # Añadir solo los resultados del efecto dentro del grupo (no comparaciones con control)
             resultados.append(result_data)
 
 # Convertir a DataFrame
 results_df = pd.DataFrame(resultados)
 
 # Crear función para generar gráfico de bosque (forest plot) mejorado con efecto combinado
-def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, color_by='tipo_tratamiento'):
-    # Filtrar datos
-    if comparacion:
-        plot_data = data[(data['parametro'] == parametro) & (data['vs_control'] == True)]
-    else:
-        plot_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
+def crear_forest_plot(data, parametro, titulo, filename=None, color_by='tipo_tratamiento'):
+    # Filtrar datos - solo efectos dentro del grupo (no comparaciones con control)
+    plot_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
     
     if len(plot_data) < 2:
         print(f"Datos insuficientes para {parametro}, {titulo}")
@@ -362,13 +319,10 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     # Línea vertical en cero
     ax.axvline(x=0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5)
     
-    # Etiquetas para los estudios
+    # Etiquetas para los estudios (solo tratamiento, sin comparación con control)
     labels = []
     for _, row in plot_data.iterrows():
-        if comparacion:
-            label = f"{row['estudio']} ({row['tipo_tratamiento']} vs {row['tipo_control']})"
-        else:
-            label = f"{row['estudio']} ({row['tipo_tratamiento']})"
+        label = f"{row['estudio']} ({row['tipo_tratamiento']})"
         labels.append(label)
     
     # Añadir etiquetas y detalles
@@ -376,12 +330,8 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
         # Texto con valor de efecto e intervalo de confianza
         effect_text = f"g = {row['efecto']:.2f} [{row['ci_inferior']:.2f}, {row['ci_superior']:.2f}]"
         
-        # Texto con cambios absolutos y porcentuales
-        if comparacion:
-            change_text = (f"Δ = {row['cambio_absoluto']:.2f} vs {row['cambio_absoluto_control']:.2f} " +
-                          f"({row['cambio_porcentual']:.1f}% vs {row['cambio_porcentual_control']:.1f}%)")
-        else:
-            change_text = f"Δ = {row['cambio_absoluto']:.2f} ({row['cambio_porcentual']:.1f}%)"
+        # Texto con cambios absolutos y porcentuales (solo del grupo de tratamiento)
+        change_text = f"Δ = {row['cambio_absoluto']:.2f} ({row['cambio_porcentual']:.1f}%)"
         
         # Posición del texto según valor del efecto
         if row['efecto'] > 0:
@@ -429,30 +379,18 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     param_name = PARAMETROS.get(parametro, parametro)
     ax.set_title(f"{titulo}: {param_name}", fontsize=16, fontweight='bold')
     
-    # Añadir interpretación según el tipo de parámetro
+    # Añadir interpretación según el tipo de parámetro (sin referencias al control)
     if parametro in MEJORA_CON_REDUCCION:
-        if comparacion:
-            ax.text(-0.5, -3.5, "Favorece al control", ha='center', fontsize=10, 
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        else:
-            ax.text(-0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Mejoría", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(-0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     else:
         # Para parámetros donde el aumento es mejora
-        if comparacion:
-            ax.text(-0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Favorece al control", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        else:
-            ax.text(-0.5, -3.5, "Mejoría", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-            ax.text(0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
-                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(-0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Leyenda para tipo de tratamiento
     if color_by == 'tipo_tratamiento':
@@ -511,13 +449,10 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     return fig
 
 
-# Crear tabla resumen por parámetro
-def crear_tabla_resumen(data, parametro, vs_control=True):
-    # Filtrar datos
-    if vs_control:
-        param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == True)]
-    else:
-        param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
+# Crear tabla resumen por parámetro (solo efectos dentro del grupo)
+def crear_tabla_resumen(data, parametro):
+    # Filtrar datos - solo efectos dentro del grupo
+    param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
     
     if len(param_data) < 3:
         return None
@@ -598,10 +533,10 @@ def crear_tabla_resumen(data, parametro, vs_control=True):
     
     return None
 
-# Crear gráfico comparativo de efectos por obesidad
+# Crear gráfico comparativo de efectos por obesidad (basado en efectos dentro del grupo)
 def crear_grafico_comparativo_obesidad(data, parametro):
-    # Filtrar datos
-    param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == True)]
+    # Filtrar datos - solo efectos dentro del grupo
+    param_data = data[(data['parametro'] == parametro) & (data['vs_control'] == False)]
     
     # Comprobar si hay suficientes datos
     has_obese = len(param_data[param_data['obesidad'] == 'Sí']) > 0
@@ -665,18 +600,18 @@ def crear_grafico_comparativo_obesidad(data, parametro):
     ax.set_xticks(x_pos)
     ax.set_xticklabels(['Pacientes sin obesidad', 'Pacientes con obesidad'], fontsize=11)
     ax.set_ylabel('Tamaño del Efecto (g de Hedges)', fontsize=12, fontweight='bold')
-    ax.set_title(f'Comparación por IMC: {PARAMETROS.get(parametro, parametro)}', fontsize=14, fontweight='bold')
+    ax.set_title(f'Efectos del Inositol por IMC: {PARAMETROS.get(parametro, parametro)}', fontsize=14, fontweight='bold')
     
-    # Añadir interpretación según el parámetro
+    # Añadir interpretación según el parámetro (sin referencias al control)
     if parametro in MEJORA_CON_REDUCCION:
-        ax.text(-0.5, -0.5, "Favorece al control", ha='center', fontsize=10,
+        ax.text(-0.5, -0.5, "Empeoramiento", ha='center', fontsize=10,
               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        ax.text(1.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
+        ax.text(1.5, 0.5, "Mejoría", ha='center', fontsize=10,
               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     else:
-        ax.text(-0.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
+        ax.text(-0.5, 0.5, "Mejoría", ha='center', fontsize=10,
               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
-        ax.text(1.5, -0.5, "Favorece al control", ha='center', fontsize=10,
+        ax.text(1.5, -0.5, "Empeoramiento", ha='center', fontsize=10,
               bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Añadir cuadrícula sutil
@@ -695,10 +630,10 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
     fig, ax = plt.subplots(figsize=(12, 10))
     ax.axis('off')
     ax.text(0.5, 0.7, 'REVISIÓN SISTEMÁTICA', fontsize=28, fontweight='bold', ha='center')
-    ax.text(0.5, 0.6, 'Efectividad del Inositol en la Reducción de Parámetros Clínicos', fontsize=20, ha='center')
+    ax.text(0.5, 0.6, 'Efectos del Inositol en Parámetros Clínicos', fontsize=20, ha='center')
     ax.text(0.5, 0.55, 'Asociados con Resistencia a la Insulina en', fontsize=20, ha='center')
     ax.text(0.5, 0.5, 'Síndrome de Ovario Poliquístico', fontsize=20, ha='center')
-    ax.text(0.5, 0.4, 'Análisis con Tamaño del Efecto (g de Hedges)', fontsize=16, ha='center')
+    ax.text(0.5, 0.4, 'Análisis de Efectos Dentro del Grupo con Tamaño del Efecto (g de Hedges)', fontsize=16, ha='center')
     pdf.savefig(fig)
     plt.close(fig)
     
@@ -707,35 +642,21 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         nombre_parametro = PARAMETROS.get(parametro, parametro)
         print(f"Procesando {nombre_parametro}...")
         
-        # 1. Forest plot para inositol vs control
+        # 1. Forest plot para efectos del inositol (solo dentro del grupo)
         fig = crear_forest_plot(
             results_df, parametro, 
-            f"Efectividad del Inositol vs Control en",
-            comparacion=True,
-            filename=f'resultados/forest_plot_{parametro}_vs_control.pdf',
+            f"Efectos del Inositol en",
+            filename=f'resultados/forest_plot_{parametro}_efectos.pdf',
             color_by='tipo_tratamiento'
         )
         if fig:
             pdf.savefig(fig)
             plt.close(fig)
         
-        # 2. Forest plot para efectos dentro del grupo de inositol
+        # 2. Forest plot por obesidad (efectos dentro del grupo)
         fig = crear_forest_plot(
             results_df, parametro, 
-            f"Efecto del Inositol en",
-            comparacion=False,
-            filename=f'resultados/forest_plot_{parametro}_solo.pdf',
-            color_by='tipo_tratamiento'
-        )
-        if fig:
-            pdf.savefig(fig)
-            plt.close(fig)
-        
-        # 3. Forest plot por obesidad (para inositol vs control)
-        fig = crear_forest_plot(
-            results_df, parametro, 
-            f"Efectividad del Inositol vs Control en",
-            comparacion=True,
+            f"Efectos del Inositol en",
             filename=f'resultados/forest_plot_{parametro}_por_obesidad.pdf',
             color_by='obesidad'
         )
@@ -743,28 +664,28 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             pdf.savefig(fig)
             plt.close(fig)
         
-        # 4. Gráfico comparativo por obesidad
+        # 3. Gráfico comparativo por obesidad
         fig = crear_grafico_comparativo_obesidad(results_df, parametro)
         if fig:
             pdf.savefig(fig)
             plt.savefig(f'resultados/comparacion_obesidad_{parametro}.pdf', format='pdf', dpi=300, bbox_inches='tight')
             plt.close(fig)
         
-        # 5. Tabla resumen para inositol vs control
-        tabla_vs_control = crear_tabla_resumen(results_df, parametro, vs_control=True)
-        if tabla_vs_control is not None:
+        # 4. Tabla resumen de efectos del inositol
+        tabla_resumen = crear_tabla_resumen(results_df, parametro)
+        if tabla_resumen is not None:
             # Crear figura para la tabla
-            fig, ax = plt.subplots(figsize=(12, len(tabla_vs_control) * 0.6 + 3))
+            fig, ax = plt.subplots(figsize=(12, len(tabla_resumen) * 0.6 + 3))
             ax.axis('tight')
             ax.axis('off')
             
             # Crear tabla
             tabla = ax.table(
-                cellText=tabla_vs_control.values,
-                colLabels=tabla_vs_control.columns,
+                cellText=tabla_resumen.values,
+                colLabels=tabla_resumen.columns,
                 loc='center',
                 cellLoc='center',
-                colColours=['#f2f2f2'] * len(tabla_vs_control.columns)
+                colColours=['#f2f2f2'] * len(tabla_resumen.columns)
             )
             
             tabla.auto_set_font_size(False)
@@ -778,20 +699,20 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
                     cell.set_height(0.15)
                 cell.set_edgecolor('#444444')
             
-            plt.title(f"Resumen de Resultados: {nombre_parametro} (vs Control)",
+            plt.title(f"Resumen de Efectos del Inositol: {nombre_parametro}",
                      fontweight='bold', fontsize=16, pad=20)
             
             pdf.savefig(fig)
             plt.close(fig)
             
             # Guardar como CSV
-            tabla_vs_control.to_csv(f'resultados/tabla_{parametro}_vs_control.csv', index=False)
+            tabla_resumen.to_csv(f'resultados/tabla_{parametro}_efectos.csv', index=False)
     
-# Generar tabla resumen global
+# Generar tabla resumen global (solo efectos dentro del grupo)
 tabla_global = []
 for parametro in sorted(df['metabolic_parameter'].unique()):
-    # Filtrar datos
-    param_data = results_df[(results_df['parametro'] == parametro) & (results_df['vs_control'] == True)]
+    # Filtrar datos - solo efectos dentro del grupo
+    param_data = results_df[(results_df['parametro'] == parametro) & (results_df['vs_control'] == False)]
     
     if len(param_data) > 0:
         # Calcular efecto combinado
@@ -897,9 +818,9 @@ for parametro in sorted(df['metabolic_parameter'].unique()):
         parametro = next((k for k, v in PARAMETROS.items() if v == row['Parámetro']), None)
         
         if parametro in MEJORA_CON_REDUCCION:
-            direccion = "favorable al inositol" if efecto > 0 else "favorable al control"
+            direccion = "mejora" if efecto > 0 else "empeoramiento"
         else:
-            direccion = "favorable al inositol" if efecto < 0 else "favorable al control"
+            direccion = "mejora" if efecto < 0 else "empeoramiento"
         
         # Significancia estadística
         if p_valor < 0.05:
@@ -907,14 +828,14 @@ for parametro in sorted(df['metabolic_parameter'].unique()):
         else:
             significancia = "no estadísticamente significativo"
         
-        conclusiones.append(f"   • {row['Parámetro']}: Se observa un efecto {magnitud} ({row['Efecto Global']}) {direccion}, {significancia} (p={row['Valor p']})")
+        conclusiones.append(f"   • {row['Parámetro']}: Se observa un efecto {magnitud} ({row['Efecto Global']}) de {direccion}, {significancia} (p={row['Valor p']})")
     
     conclusiones.extend([
         "",
         "2. Comparación por presencia de obesidad:",
         "   • En pacientes con obesidad, el inositol muestra efectos más pronunciados en los parámetros de resistencia",
         "     a la insulina (HOMA-IR, insulina) en comparación con pacientes normopeso.",
-        "   • La efectividad en la reducción de glucosa e IMC es similar en ambos grupos.",
+        "   • Los efectos en la reducción de glucosa e IMC son similares en ambos grupos.",
         "",
         "3. Comparación por tipo de inositol:",
         "   • La combinación de myo-inositol y D-chiro-inositol (MI+DCI) muestra una tendencia a mayores efectos",
@@ -923,9 +844,9 @@ for parametro in sorted(df['metabolic_parameter'].unique()):
         "",
         "4. Consideraciones metodológicas:",
         "   • Los estudios muestran heterogeneidad en duración de tratamiento (12-26 semanas) y dosis.",
-        "   • La mayoría de los estudios utilizan metformina como comparador activo, lo que puede",
-        "     subestimar el efecto neto del inositol al compararlo con un tratamiento también efectivo.",
-        "   • Los estudios con placebo como control muestran tamaños de efecto más grandes para el inositol."
+        "   • Este análisis se enfoca en los efectos dentro de cada grupo de tratamiento,",
+        "     proporcionando una medida directa de la efectividad del inositol.",
+        "   • Los diferentes tipos de inositol muestran perfiles de efectividad distintos."
     ])
     
     ax.text(0.05, 0.95, "\n".join(conclusiones), va='top', fontsize=12)
