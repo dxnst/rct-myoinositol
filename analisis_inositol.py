@@ -7,15 +7,15 @@ from scipy import stats
 import math
 import os
 
-# Configuración en español
+# Configuración en español y mejora de la presentación visual
 plt.rcParams.update({
     'font.family': 'DejaVu Sans',
-    'axes.titlesize': 12,
-    'axes.labelsize': 10,
-    'xtick.labelsize': 9,
-    'ytick.labelsize': 9,
-    'legend.fontsize': 9,
-    'figure.figsize': (12, 8)
+    'axes.titlesize': 14,
+    'axes.labelsize': 12,
+    'xtick.labelsize': 10,
+    'ytick.labelsize': 10,
+    'legend.fontsize': 10,
+    'figure.figsize': (14, 9)
 })
 
 # Definir colores para los diferentes tipos de tratamiento
@@ -24,7 +24,8 @@ COLORS = {
     'DCI': '#2ecc71',     # D-chiro-inositol - verde
     'MI+DCI': '#9b59b6',  # Combinación - morado
     'MI+MET': '#e74c3c',  # Myo-inositol + metformina - rojo
-    'Control': '#95a5a6'  # Control - gris
+    'Control': '#95a5a6', # Control - gris
+    'Combinado': '#f39c12' # Efecto combinado - naranja
 }
 
 # Cargar los datos
@@ -43,6 +44,14 @@ PARAMETROS = {
     'ovarian_volume_left_ml': 'Volumen ovárico izquierdo (mL)',
     'menstrual_days': 'Días del ciclo menstrual'
 }
+
+# Parámetros donde valores más bajos indican mejora
+# Parámetros donde valores más bajos indican mejora
+MEJORA_CON_REDUCCION = [
+    'bmi_kg_m2', 'glucose_mg_dl', 'insulin_uU_ml', 
+    'homa_ir', 'testosterone_ng_ml', 'ovarian_volume_ml',
+    'ovarian_volume_right_ml', 'ovarian_volume_left_ml'
+]
 
 # Función para clasificar el tipo de tratamiento
 def clasificar_tratamiento(tratamiento):
@@ -67,8 +76,18 @@ def clasificar_tratamiento(tratamiento):
 # Añadir columna con el tipo de tratamiento clasificado
 df['tipo_tratamiento'] = df['treatment_formulation'].apply(clasificar_tratamiento)
 
-# Función para calcular el tamaño del efecto (g de Hedges)
-def calcular_hedges_g(pre_mean, post_mean, pre_sd, post_sd, n):
+# Función para ajustar el signo del efecto según el parámetro
+# (asegura que valores negativos siempre sean mejora)
+def ajustar_direccion_efecto(efecto, parametro):
+    # Para parámetros donde la reducción es una mejora, mantenemos el signo
+    # Para otros parámetros, invertimos el signo
+    if parametro in MEJORA_CON_REDUCCION:
+        return efecto
+    else:
+        return -efecto  # Invertir para parámetros donde el aumento es mejora
+
+# Función para calcular el tamaño del efecto (g de Hedges) con dirección ajustada
+def calcular_hedges_g(pre_mean, post_mean, pre_sd, post_sd, n, parametro):
     # Calcular diferencia de medias
     mean_diff = pre_mean - post_mean
     
@@ -86,21 +105,24 @@ def calcular_hedges_g(pre_mean, post_mean, pre_sd, post_sd, n):
     correction = 1 - (3 / (4 * (n - 1) - 1))
     g = d * correction
     
+    # Ajustar la dirección del efecto según el parámetro
+    g_adjusted = ajustar_direccion_efecto(g, parametro)
+    
     # Error estándar de g de Hedges
     se = np.sqrt((2/n) + ((g**2) / (2*n)))
     
     # Calcular intervalo de confianza del 95%
-    ci_lower = g - 1.96 * se
-    ci_upper = g + 1.96 * se
+    ci_lower = g_adjusted - 1.96 * se
+    ci_upper = g_adjusted + 1.96 * se
     
     # Calcular valor p
-    z = g / se
+    z = g_adjusted / se
     p_value = 2 * (1 - stats.norm.cdf(abs(z)))
     
-    return g, se, ci_lower, ci_upper, p_value, mean_diff
+    return g_adjusted, se, ci_lower, ci_upper, p_value, mean_diff
 
-# Calcular tamaño del efecto entre dos grupos independientes
-def calcular_hedges_g_entre_grupos(mean1, mean2, sd1, sd2, n1, n2):
+# Calcular tamaño del efecto entre dos grupos independientes con dirección ajustada
+def calcular_hedges_g_entre_grupos(mean1, mean2, sd1, sd2, n1, n2, parametro):
     # Diferencia de medias
     mean_diff = mean1 - mean2
     
@@ -118,21 +140,24 @@ def calcular_hedges_g_entre_grupos(mean1, mean2, sd1, sd2, n1, n2):
     correction = 1 - (3 / (4 * (n1 + n2 - 2) - 1))
     g = d * correction
     
+    # Ajustar la dirección del efecto según el parámetro
+    g_adjusted = ajustar_direccion_efecto(g, parametro)
+    
     # Error estándar de g
     se = np.sqrt((n1 + n2) / (n1 * n2) + (g**2 / (2 * (n1 + n2 - 2))))
     
     # Intervalo de confianza del 95%
-    ci_lower = g - 1.96 * se
-    ci_upper = g + 1.96 * se
+    ci_lower = g_adjusted - 1.96 * se
+    ci_upper = g_adjusted + 1.96 * se
     
     # Valor p
-    t_stat = g / se
+    t_stat = g_adjusted / se
     df = n1 + n2 - 2
     p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df))
     
-    return g, se, ci_lower, ci_upper, p_value, mean_diff
+    return g_adjusted, se, ci_lower, ci_upper, p_value, mean_diff
 
-# Función para calcular la diferencia neta del efecto entre grupos de tratamiento y control
+# Función para calcular la diferencia neta del efecto entre grupos de tratamiento y control con dirección ajustada
 def calcular_efecto_neto(intervention_row, control_row):
     # Calcular cambio en el grupo de intervención
     int_change = intervention_row['post_mean'] - intervention_row['baseline_mean']
@@ -149,10 +174,54 @@ def calcular_efecto_neto(intervention_row, control_row):
     g, se, ci_lower, ci_upper, p_value, _ = calcular_hedges_g_entre_grupos(
         int_change, ctrl_change, 
         int_sd_change, ctrl_sd_change,
-        intervention_row['sample_size'], control_row['sample_size']
+        intervention_row['sample_size'], control_row['sample_size'],
+        intervention_row['metabolic_parameter']
     )
     
     return g, se, ci_lower, ci_upper, p_value, net_effect
+
+# Función para calcular el efecto combinado (meta-análisis) utilizando el método de efectos aleatorios
+def calcular_efecto_combinado(data):
+    if len(data) < 2:
+        return None, None, None, None, None
+    
+    # Calcular varianzas
+    variances = data['error_estandar'] ** 2
+    
+    # Calcular pesos (inverso de la varianza)
+    weights = 1 / variances
+    
+    # Calcular heterogeneidad (Q)
+    Q = np.sum(weights * (data['efecto'] - np.average(data['efecto'], weights=weights))**2)
+    df = len(data) - 1
+    
+    # Calcular I² (porcentaje de variabilidad debido a heterogeneidad)
+    I_squared = max(0, (Q - df) / Q * 100) if Q > 0 else 0
+    
+    # Calcular tau² (varianza entre estudios)
+    if Q > df:
+        tau_squared = (Q - df) / (np.sum(weights) - np.sum(weights**2) / np.sum(weights))
+    else:
+        tau_squared = 0
+    
+    # Calcular nuevos pesos con tau²
+    weights_random = 1 / (variances + tau_squared)
+    
+    # Calcular efecto combinado
+    combined_effect = np.average(data['efecto'], weights=weights_random)
+    
+    # Calcular error estándar del efecto combinado
+    se_combined = np.sqrt(1 / np.sum(weights_random))
+    
+    # Calcular intervalo de confianza del 95%
+    ci_lower = combined_effect - 1.96 * se_combined
+    ci_upper = combined_effect + 1.96 * se_combined
+    
+    # Calcular valor p
+    z = combined_effect / se_combined
+    p_value = 2 * (1 - stats.norm.cdf(abs(z)))
+    
+    return combined_effect, se_combined, ci_lower, ci_upper, p_value, I_squared
 
 # Preparar datos para análisis
 resultados = []
@@ -176,7 +245,7 @@ for parametro in df['metabolic_parameter'].unique():
             g_int, se_int, ci_lower_int, ci_upper_int, p_int, mean_diff_int = calcular_hedges_g(
                 int_row['baseline_mean'], int_row['post_mean'],
                 int_row['baseline_sd'], int_row['post_sd'],
-                int_row['sample_size']
+                int_row['sample_size'], int_row['metabolic_parameter']
             )
             
             # Calcular cambio porcentual
@@ -221,7 +290,7 @@ for parametro in df['metabolic_parameter'].unique():
                 g_ctrl, se_ctrl, ci_lower_ctrl, ci_upper_ctrl, p_ctrl, mean_diff_ctrl = calcular_hedges_g(
                     control_row['baseline_mean'], control_row['post_mean'],
                     control_row['baseline_sd'], control_row['post_sd'],
-                    control_row['sample_size']
+                    control_row['sample_size'], control_row['metabolic_parameter']
                 )
                 
                 # Cambio porcentual en el control
@@ -253,7 +322,7 @@ for parametro in df['metabolic_parameter'].unique():
 # Convertir a DataFrame
 results_df = pd.DataFrame(resultados)
 
-# Crear función para generar gráfico de bosque (forest plot)
+# Crear función para generar gráfico de bosque (forest plot) mejorado con efecto combinado
 def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, color_by='tipo_tratamiento'):
     # Filtrar datos
     if comparacion:
@@ -269,7 +338,7 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     plot_data = plot_data.sort_values('efecto', ascending=False)
     
     # Crear figura
-    fig, ax = plt.figure(figsize=(14, max(8, len(plot_data) * 0.6))), plt.gca()
+    fig, ax = plt.figure(figsize=(15, max(10, len(plot_data) * 0.7))), plt.gca()
     
     # Posiciones Y
     y_positions = np.arange(len(plot_data))
@@ -286,21 +355,38 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
     for i, (_, row) in enumerate(plot_data.iterrows()):
         # Línea para CI
         ax.plot([row['ci_inferior'], row['ci_superior']], [i, i], 
-                color=colors[i], linewidth=2, alpha=0.7)
+                color=colors[i], linewidth=2.5, alpha=0.8)
         # Punto para efecto
-        ax.scatter(row['efecto'], i, color=colors[i], s=100, zorder=3)
+        ax.scatter(row['efecto'], i, color=colors[i], s=120, zorder=3, edgecolor='black', linewidth=1)
     
     # Línea vertical en cero
-    ax.axvline(x=0, color='gray', linestyle='--', alpha=0.5)
+    ax.axvline(x=0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5)
     
-    # Añadir zonas de interpretación
+    # Añadir zonas de interpretación con etiquetas mejoradas
     ax.axvspan(-0.2, 0.2, alpha=0.1, color='gray')
+    ax.text(0, -1.5, "Efecto insignificante", ha='center', fontsize=10, 
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    
     ax.axvspan(-0.5, -0.2, alpha=0.1, color='lightblue')
     ax.axvspan(0.2, 0.5, alpha=0.1, color='lightblue')
+    ax.text(-0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    ax.text(0.35, -1.5, "Efecto pequeño", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    
     ax.axvspan(-0.8, -0.5, alpha=0.1, color='lightgreen')
     ax.axvspan(0.5, 0.8, alpha=0.1, color='lightgreen')
+    ax.text(-0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    ax.text(0.65, -1.5, "Efecto moderado", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    
     ax.axvspan(-4, -0.8, alpha=0.1, color='#ffb6c1')
     ax.axvspan(0.8, 4, alpha=0.1, color='#ffb6c1')
+    ax.text(-1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    ax.text(1.2, -1.5, "Efecto grande", ha='center', fontsize=10,
+           bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Etiquetas para los estudios
     labels = []
@@ -331,59 +417,117 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
             text_pos = row['ci_inferior'] - 0.1
             ha = 'right'
         
-        ax.text(text_pos, i, effect_text, va='center', ha=ha, fontsize=9)
-        ax.text(text_pos, i - 0.3, change_text, va='center', ha=ha, fontsize=8, color='#555555')
+        ax.text(text_pos, i, effect_text, va='center', ha=ha, fontsize=10, fontweight='bold')
+        ax.text(text_pos, i - 0.3, change_text, va='center', ha=ha, fontsize=9, color='#333333')
         
         # Añadir valor p
         p_text = f"p = {row['p_valor']:.4f}"
         if row['p_valor'] < 0.05:
             p_text += "*"
             ax.axhspan(i - 0.4, i + 0.4, alpha=0.1, color='green')
-        ax.text(text_pos, i + 0.3, p_text, va='center', ha=ha, fontsize=8, color='#555555')
+        ax.text(text_pos, i + 0.3, p_text, va='center', ha=ha, fontsize=9, color='#333333')
+    
+    # Calcular y añadir el efecto combinado
+    combined_effect, se_combined, ci_lower, ci_upper, p_value, I_squared = calcular_efecto_combinado(plot_data)
+    
+    if combined_effect is not None:
+        # Añadir línea para el efecto combinado
+        ax.axhline(y=-0.8, xmin=0, xmax=1, color=COLORS['Combinado'], linestyle='-', linewidth=0)  # Línea invisible para espaciado
+        ax.axvline(x=combined_effect, color=COLORS['Combinado'], linestyle='-', linewidth=2.5, alpha=0.9)
+        
+        # Añadir región sombreada para el intervalo de confianza del efecto combinado
+        ax.axvspan(ci_lower, ci_upper, alpha=0.2, color=COLORS['Combinado'])
+        
+        # Etiqueta para el efecto combinado
+        combined_text = (f"Efecto Combinado: {combined_effect:.2f} [{ci_lower:.2f}, {ci_upper:.2f}], " +
+                        f"p = {p_value:.4f}, I² = {I_squared:.1f}%")
+        
+        ax.text(combined_effect, -2.5, combined_text, ha='center', va='center', 
+                fontsize=11, fontweight='bold', 
+                bbox=dict(facecolor='white', alpha=0.8, edgecolor=COLORS['Combinado'], boxstyle='round,pad=0.5'))
     
     # Configurar ejes
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(labels)
-    ax.set_xlabel('Tamaño del Efecto (g de Hedges)', fontsize=11, fontweight='bold')
+    ax.set_yticklabels(labels, fontsize=10)
+    ax.set_xlabel('Tamaño del Efecto (g de Hedges)', fontsize=12, fontweight='bold')
     
     # Ajustar título
     param_name = PARAMETROS.get(parametro, parametro)
-    ax.set_title(f"{titulo}: {param_name}", fontsize=14, fontweight='bold')
+    ax.set_title(f"{titulo}: {param_name}", fontsize=16, fontweight='bold')
     
-    # Añadir interpretación
-    if comparacion:
-        ax.text(-0.5, -1.5, "Favorece al control", ha='center', fontsize=9)
-        ax.text(0.5, -1.5, "Favorece al inositol", ha='center', fontsize=9)
+    # Añadir interpretación según el tipo de parámetro
+    if parametro in MEJORA_CON_REDUCCION:
+        if comparacion:
+            ax.text(-0.5, -3.5, "Favorece al control", ha='center', fontsize=10, 
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+            ax.text(0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        else:
+            ax.text(-0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+            ax.text(0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     else:
-        ax.text(-0.5, -1.5, "Empeoramiento", ha='center', fontsize=9)
-        ax.text(0.5, -1.5, "Mejoría", ha='center', fontsize=9)
+        # Para parámetros donde el aumento es mejora
+        if comparacion:
+            ax.text(-0.5, -3.5, "Favorece al inositol", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+            ax.text(0.5, -3.5, "Favorece al control", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        else:
+            ax.text(-0.5, -3.5, "Mejoría", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+            ax.text(0.5, -3.5, "Empeoramiento", ha='center', fontsize=10,
+                   bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
     
     # Leyenda para tipo de tratamiento
     if color_by == 'tipo_tratamiento':
         legend_elements = []
         for treatment_type, color in COLORS.items():
-            if any(row['tipo_tratamiento'] == treatment_type for _, row in plot_data.iterrows()):
-                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=10, label=treatment_type))
+            if treatment_type != 'Combinado' and any(row['tipo_tratamiento'] == treatment_type for _, row in plot_data.iterrows()):
+                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, 
+                                             markersize=12, label=treatment_type, markeredgecolor='black'))
+        
+        # Añadir efecto combinado a la leyenda
+        if combined_effect is not None:
+            legend_elements.append(plt.Line2D([0], [0], color=COLORS['Combinado'], 
+                                         linewidth=2.5, label='Efecto Combinado'))
+        
         if legend_elements:
-            ax.legend(handles=legend_elements, loc='upper right')
+            ax.legend(handles=legend_elements, loc='upper right', fontsize=10, framealpha=0.9)
     
     # Leyenda para obesidad
     elif color_by == 'obesidad':
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['MI'], markersize=10, label='Con obesidad'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['DCI'], markersize=10, label='Sin obesidad')
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['MI'], 
+                     markersize=12, label='Con obesidad', markeredgecolor='black'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['DCI'], 
+                     markersize=12, label='Sin obesidad', markeredgecolor='black')
         ]
-        ax.legend(handles=legend_elements, loc='upper right')
+        
+        # Añadir efecto combinado a la leyenda
+        if combined_effect is not None:
+            legend_elements.append(plt.Line2D([0], [0], color=COLORS['Combinado'], 
+                                         linewidth=2.5, label='Efecto Combinado'))
+        
+        ax.legend(handles=legend_elements, loc='upper right', fontsize=10, framealpha=0.9)
     
     # Límites del gráfico
     all_limits = np.concatenate([
         plot_data['ci_inferior'].values,
         plot_data['ci_superior'].values,
-        [plot_data['efecto'].min() - 0.2, plot_data['efecto'].max() + 0.2]
+        [plot_data['efecto'].min() - 0.3, plot_data['efecto'].max() + 0.3]
     ])
-    margin = max(1.0, abs(all_limits.min()) * 0.2, abs(all_limits.max()) * 0.2)
+    
+    if combined_effect is not None:
+        all_limits = np.append(all_limits, [ci_lower - 0.2, ci_upper + 0.2])
+    
+    margin = max(1.0, abs(all_limits.min()) * 0.25, abs(all_limits.max()) * 0.25)
     ax.set_xlim(min(all_limits) - margin, max(all_limits) + margin)
-    ax.set_ylim(-2.5, len(plot_data) - 0.5)
+    ax.set_ylim(-4.0, len(plot_data) - 0.5)
+    
+    # Añadir cuadrícula sutil
+    ax.grid(True, linestyle='--', alpha=0.3)
     
     plt.tight_layout()
     
@@ -391,6 +535,7 @@ def crear_forest_plot(data, parametro, titulo, comparacion=True, filename=None, 
         plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
     
     return fig
+
 
 # Crear tabla resumen por parámetro
 def crear_tabla_resumen(data, parametro, vs_control=True):
@@ -514,7 +659,7 @@ def crear_grafico_comparativo_obesidad(data, parametro):
     result_df = pd.DataFrame(results)
     
     # Crear figura
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 7))
     
     # Colores
     colors = ['#3498db', '#e74c3c']  # Azul para no obesos, rojo para obesos
@@ -524,7 +669,7 @@ def crear_grafico_comparativo_obesidad(data, parametro):
     
     # Graficar barras
     bars = ax.bar(x_pos, result_df['efecto'], yerr=result_df['error'] * 1.96,
-                 width=0.6, color=colors, alpha=0.7, capsize=10, 
+                 width=0.6, color=colors, alpha=0.8, capsize=10, 
                  error_kw={'elinewidth': 2, 'capthick': 2})
     
     # Añadir valores
@@ -532,26 +677,36 @@ def crear_grafico_comparativo_obesidad(data, parametro):
         height = bar.get_height()
         pos_y = height + 0.1 if height >= 0 else height - 0.25
         ax.text(bar.get_x() + bar.get_width()/2., pos_y,
-               f"{result_df['efecto'].iloc[i]:.2f}", ha='center', fontsize=10)
+               f"{result_df['efecto'].iloc[i]:.2f}", ha='center', fontsize=11, fontweight='bold')
         
         # Añadir tamaño de muestra y número de estudios
         ax.text(bar.get_x() + bar.get_width()/2., -0.05,
                f"n={result_df['n'].iloc[i]}\n(k={result_df['estudios'].iloc[i]})",
-               ha='center', va='top', fontsize=9)
+               ha='center', va='top', fontsize=10)
     
     # Añadir línea horizontal en cero
-    ax.axhline(y=0, linestyle='--', color='gray', alpha=0.6)
+    ax.axhline(y=0, linestyle='--', color='gray', alpha=0.7, linewidth=1.5)
     
     # Etiquetas y título
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(['Pacientes sin obesidad', 'Pacientes con obesidad'])
-    ax.set_ylabel('Tamaño del Efecto (g de Hedges)', fontsize=11)
+    ax.set_xticklabels(['Pacientes sin obesidad', 'Pacientes con obesidad'], fontsize=11)
+    ax.set_ylabel('Tamaño del Efecto (g de Hedges)', fontsize=12, fontweight='bold')
     ax.set_title(f'Comparación por IMC: {PARAMETROS.get(parametro, parametro)}', fontsize=14, fontweight='bold')
     
-    # Añadir interpretación
-    ax.text(-0.5, -0.5, "Favorece al control", ha='center', fontsize=9)
-    ax.text(0.5, -0.5, "Favorece al control", ha='center', fontsize=9)
-    ax.text(1.5, 0.5, "Favorece al inositol", ha='center', fontsize=9)
+    # Añadir interpretación según el parámetro
+    if parametro in MEJORA_CON_REDUCCION:
+        ax.text(-0.5, -0.5, "Favorece al control", ha='center', fontsize=10,
+              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(1.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
+              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    else:
+        ax.text(-0.5, 0.5, "Favorece al inositol", ha='center', fontsize=10,
+              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        ax.text(1.5, -0.5, "Favorece al control", ha='center', fontsize=10,
+              bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+    
+    # Añadir cuadrícula sutil
+    ax.grid(True, linestyle='--', alpha=0.3)
     
     plt.tight_layout()
     
@@ -565,11 +720,11 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
     # Página de título
     fig, ax = plt.subplots(figsize=(12, 10))
     ax.axis('off')
-    ax.text(0.5, 0.7, 'REVISIÓN SISTEMÁTICA', fontsize=24, fontweight='bold', ha='center')
-    ax.text(0.5, 0.6, 'Efectividad del Inositol en la Reducción de Parámetros Clínicos', fontsize=18, ha='center')
-    ax.text(0.5, 0.55, 'Asociados con Resistencia a la Insulina en', fontsize=18, ha='center')
-    ax.text(0.5, 0.5, 'Síndrome de Ovario Poliquístico', fontsize=18, ha='center')
-    ax.text(0.5, 0.4, 'Análisis con Tamaño del Efecto (g de Hedges)', fontsize=14, ha='center')
+    ax.text(0.5, 0.7, 'REVISIÓN SISTEMÁTICA', fontsize=28, fontweight='bold', ha='center')
+    ax.text(0.5, 0.6, 'Efectividad del Inositol en la Reducción de Parámetros Clínicos', fontsize=20, ha='center')
+    ax.text(0.5, 0.55, 'Asociados con Resistencia a la Insulina en', fontsize=20, ha='center')
+    ax.text(0.5, 0.5, 'Síndrome de Ovario Poliquístico', fontsize=20, ha='center')
+    ax.text(0.5, 0.4, 'Análisis con Tamaño del Efecto (g de Hedges)', fontsize=16, ha='center')
     pdf.savefig(fig)
     plt.close(fig)
     
@@ -583,11 +738,11 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             results_df, parametro, 
             f"Efectividad del Inositol vs Control en",
             comparacion=True,
+            filename=f'resultados/forest_plot_{parametro}_vs_control.pdf',
             color_by='tipo_tratamiento'
         )
         if fig:
             pdf.savefig(fig)
-            plt.savefig(f'resultados/forest_plot_{parametro}_vs_control.pdf', format='pdf', dpi=300, bbox_inches='tight')
             plt.close(fig)
         
         # 2. Forest plot para efectos dentro del grupo de inositol
@@ -595,11 +750,11 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             results_df, parametro, 
             f"Efecto del Inositol en",
             comparacion=False,
+            filename=f'resultados/forest_plot_{parametro}_solo.pdf',
             color_by='tipo_tratamiento'
         )
         if fig:
             pdf.savefig(fig)
-            plt.savefig(f'resultados/forest_plot_{parametro}_solo.pdf', format='pdf', dpi=300, bbox_inches='tight')
             plt.close(fig)
         
         # 3. Forest plot por obesidad (para inositol vs control)
@@ -607,11 +762,11 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             results_df, parametro, 
             f"Efectividad del Inositol vs Control en",
             comparacion=True,
+            filename=f'resultados/forest_plot_{parametro}_por_obesidad.pdf',
             color_by='obesidad'
         )
         if fig:
             pdf.savefig(fig)
-            plt.savefig(f'resultados/forest_plot_{parametro}_por_obesidad.pdf', format='pdf', dpi=300, bbox_inches='tight')
             plt.close(fig)
         
         # 4. Gráfico comparativo por obesidad
@@ -625,7 +780,7 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         tabla_vs_control = crear_tabla_resumen(results_df, parametro, vs_control=True)
         if tabla_vs_control is not None:
             # Crear figura para la tabla
-            fig, ax = plt.subplots(figsize=(12, len(tabla_vs_control) * 0.5 + 3))
+            fig, ax = plt.subplots(figsize=(12, len(tabla_vs_control) * 0.6 + 3))
             ax.axis('tight')
             ax.axis('off')
             
@@ -639,11 +794,18 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             )
             
             tabla.auto_set_font_size(False)
-            tabla.set_fontsize(9)
-            tabla.scale(1, 1.5)
+            tabla.set_fontsize(10)
+            tabla.scale(1, 1.6)
+            
+            for (i, j), cell in tabla.get_celld().items():
+                if i == 0:  # Encabezados
+                    cell.set_fontsize(11)
+                    cell.set_text_props(fontweight='bold')
+                    cell.set_height(0.15)
+                cell.set_edgecolor('#444444')
             
             plt.title(f"Resumen de Resultados: {nombre_parametro} (vs Control)",
-                     fontweight='bold', fontsize=14, pad=20)
+                     fontweight='bold', fontsize=16, pad=20)
             
             pdf.savefig(fig)
             plt.close(fig)
@@ -651,27 +813,19 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
             # Guardar como CSV
             tabla_vs_control.to_csv(f'resultados/tabla_{parametro}_vs_control.csv', index=False)
     
-    # Generar tabla resumen global
-    tabla_global = []
-    for parametro in sorted(df['metabolic_parameter'].unique()):
-        # Filtrar datos
-        param_data = results_df[(results_df['parametro'] == parametro) & (results_df['vs_control'] == True)]
+# Generar tabla resumen global
+tabla_global = []
+for parametro in sorted(df['metabolic_parameter'].unique()):
+    # Filtrar datos
+    param_data = results_df[(results_df['parametro'] == parametro) & (results_df['vs_control'] == True)]
+    
+    if len(param_data) > 0:
+        # Calcular efecto combinado
+        combined_effect, se_combined, ci_lower, ci_upper, p_value, I_squared = calcular_efecto_combinado(param_data)
         
-        if len(param_data) > 0:
-            # Para todos los datos
+        if combined_effect is not None:
+            # Cambios medios ponderados
             weights = param_data['n']
-            weighted_effect = np.average(param_data['efecto'], weights=weights)
-            weighted_se = np.sqrt(np.sum((weights * param_data['error_estandar'])**2)) / np.sum(weights)
-            
-            # Intervalo de confianza
-            ci_lower = weighted_effect - 1.96 * weighted_se
-            ci_upper = weighted_effect + 1.96 * weighted_se
-            
-            # Valor p
-            z = weighted_effect / weighted_se
-            p_value = 2 * (1 - stats.norm.cdf(abs(z)))
-            
-            # Cambios
             weighted_change = np.average(param_data['cambio_absoluto'], weights=weights)
             weighted_pct = np.average(param_data['cambio_porcentual'], weights=weights)
             
@@ -682,10 +836,11 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
                 'Parámetro': PARAMETROS.get(parametro, parametro),
                 'Estudios': len(param_data),
                 'Participantes': sum(param_data['n']),
-                'Efecto Global': weighted_effect,
+                'Efecto Global': combined_effect,
                 'IC 95% Inferior': ci_lower,
                 'IC 95% Superior': ci_upper,
                 'Valor p': p_value,
+                'I²': I_squared,
                 'Cambio Medio': weighted_change,
                 'Cambio %': weighted_pct,
                 'Estudios Sig.': sig_studies,
@@ -701,12 +856,12 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         tabla_global_df['IC 95% Inferior'] = tabla_global_df['IC 95% Inferior'].map(lambda x: f"{x:.2f}")
         tabla_global_df['IC 95% Superior'] = tabla_global_df['IC 95% Superior'].map(lambda x: f"{x:.2f}")
         tabla_global_df['Valor p'] = tabla_global_df['Valor p'].map(lambda x: f"{x:.4f}")
+        tabla_global_df['I²'] = tabla_global_df['I²'].map(lambda x: f"{x:.1f}%")
         tabla_global_df['Cambio Medio'] = tabla_global_df['Cambio Medio'].map(lambda x: f"{x:.2f}")
         tabla_global_df['Cambio %'] = tabla_global_df['Cambio %'].map(lambda x: f"{x:.1f}%")
-        tabla_global_df['% Significativos'] = tabla_global_df['% Significativos'].map(lambda x: f"{x:.1f}%")
-        
+        tabla_global_df['% Significativos'] = tabla_global_df['% Significativos'].map(lambda x: f"{x:.1f}%")        
         # Crear figura para la tabla
-        fig, ax = plt.subplots(figsize=(12, len(tabla_global_df) * 0.5 + 3))
+        fig, ax = plt.subplots(figsize=(14, len(tabla_global_df) * 0.6 + 3))
         ax.axis('tight')
         ax.axis('off')
         
@@ -720,11 +875,18 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         )
         
         tabla.auto_set_font_size(False)
-        tabla.set_fontsize(9)
-        tabla.scale(1, 1.5)
+        tabla.set_fontsize(10)
+        tabla.scale(1, 1.6)
+        
+        for (i, j), cell in tabla.get_celld().items():
+            if i == 0:  # Encabezados
+                cell.set_fontsize(11)
+                cell.set_text_props(fontweight='bold')
+                cell.set_height(0.15)
+            cell.set_edgecolor('#444444')
         
         plt.title("Resumen Global de la Efectividad del Inositol",
-                 fontweight='bold', fontsize=14, pad=20)
+                 fontweight='bold', fontsize=16, pad=20)
         
         pdf.savefig(fig)
         plt.close(fig)
@@ -744,7 +906,7 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
     
     # Añadir conclusiones basadas en los resultados
     for _, row in tabla_global_df.iterrows():
-        efecto = float(row['Efecto Global'])
+        efecto = float(row['Efecto Global'].replace(',', '.'))
         p_valor = float(row['Valor p'].replace(',', '.'))
         
         # Interpretar el tamaño del efecto
@@ -757,11 +919,13 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         else:
             magnitud = "grande"
         
-        # Determinar dirección del efecto
-        if efecto > 0:
-            direccion = "favorable al inositol"
+        # Determinar dirección del efecto según el parámetro
+        parametro = next((k for k, v in PARAMETROS.items() if v == row['Parámetro']), None)
+        
+        if parametro in MEJORA_CON_REDUCCION:
+            direccion = "favorable al inositol" if efecto > 0 else "favorable al control"
         else:
-            direccion = "favorable al control"
+            direccion = "favorable al inositol" if efecto < 0 else "favorable al control"
         
         # Significancia estadística
         if p_valor < 0.05:
@@ -790,7 +954,7 @@ with PdfPages('resultados/revision_sistematica_inositol.pdf') as pdf:
         "   • Los estudios con placebo como control muestran tamaños de efecto más grandes para el inositol."
     ])
     
-    ax.text(0.05, 0.95, "\n".join(conclusiones), va='top', fontsize=11)
+    ax.text(0.05, 0.95, "\n".join(conclusiones), va='top', fontsize=12)
     
     pdf.savefig(fig)
     plt.close(fig)
