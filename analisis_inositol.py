@@ -157,29 +157,6 @@ def calcular_hedges_g_entre_grupos(mean1, mean2, sd1, sd2, n1, n2, parametro):
     
     return g_adjusted, se, ci_lower, ci_upper, p_value, mean_diff
 
-# Función para calcular la diferencia neta del efecto entre grupos de tratamiento y control con dirección ajustada
-def calcular_efecto_neto(intervention_row, control_row):
-    # Calcular cambio en el grupo de intervención
-    int_change = intervention_row['post_mean'] - intervention_row['baseline_mean']
-    int_sd_change = np.sqrt(intervention_row['baseline_sd']**2 + intervention_row['post_sd']**2)
-    
-    # Calcular cambio en el grupo de control
-    ctrl_change = control_row['post_mean'] - control_row['baseline_mean']
-    ctrl_sd_change = np.sqrt(control_row['baseline_sd']**2 + control_row['post_sd']**2)
-    
-    # Calcular el efecto neto (diferencia de cambios)
-    net_effect = int_change - ctrl_change
-    
-    # Calcular g de Hedges para el efecto neto
-    g, se, ci_lower, ci_upper, p_value, _ = calcular_hedges_g_entre_grupos(
-        int_change, ctrl_change, 
-        int_sd_change, ctrl_sd_change,
-        intervention_row['sample_size'], control_row['sample_size'],
-        intervention_row['metabolic_parameter']
-    )
-    
-    return g, se, ci_lower, ci_upper, p_value, net_effect
-
 # Función para calcular el efecto combinado (meta-análisis) utilizando el método de efectos aleatorios
 def calcular_efecto_combinado(data):
     if len(data) < 2:
