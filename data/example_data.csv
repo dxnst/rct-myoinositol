@@ -9,8 +9,6 @@ Gul_2025,Pakistan,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,ho
 Gul_2025,Pakistan,control,metformin_2000mg,homa_ir,12,30,4.80,1.71,3.25,1.70,yes,25.73,2.67,a
 Gul_2025,Pakistan,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,testosterone_ng_ml,12,30,1.05,0.56,1.23,0.81,yes,27.49,4.39,a
 Gul_2025,Pakistan,control,metformin_2000mg,testosterone_ng_ml,12,30,0.96,0.25,0.57,0.20,yes,25.73,2.67,a
-Gul_2025,Pakistan,intervention,myo_inositol_1950mg_plus_d_chiro_inositol_50mg,ferriman_gallwey,12,30,13.39,1.47,11.11,1.10,yes,27.49,4.39,a
-Gul_2025,Pakistan,control,metformin_2000mg,ferriman_gallwey,12,30,13.33,3.13,11.7,2.58,yes,25.73,2.67,a
 Basciani_2025,Italia,intervention,d_chiro_inositol_2400mg_plus_diet,bmi_kg_m2,17,24,29.55,2.7555555556,28.2,2.2962962963,yes,29.55,2.7555555556,a
 Basciani_2025,Italia,control,diet,bmi_kg_m2,17,24,28.2,0.9851851852,26.4,1.3703703704,yes,28.2,0.9851851852,a
 Basciani_2025,Italia,intervention,d_chiro_inositol_2400mg_plus_diet,glucose_mg_dl,17,24,106,8.8888,102.5,7.96296,yes,29.55,2.7555555556,a
@@ -21,8 +19,6 @@ Basciani_2025,Italia,intervention,d_chiro_inositol_2400mg_plus_diet,homa_ir,17,2
 Basciani_2025,Italia,control,diet,homa_ir,17,24,4.65,1.1481481481,3.35,1.03703703704,yes,28.2,0.9851851852,a
 Basciani_2025,Italia,intervention,d_chiro_inositol_2400mg_plus_diet,testosterone_ng_ml,17,24,0.42,0.113,0.475,0.0759,yes,29.55,2.7555555556,a
 Basciani_2025,Italia,control,diet,testosterone_ng_ml,17,24,0.405,0.0944,0.28,0.0889,yes,28.2,0.9851851852,a
-Basciani_2025,Italia,intervention,d_chiro_inositol_2400mg_plus_diet,menstrual_days,17,24,28,1.3333333333,32,2.962962963,yes,29.55,2.7555555556,a
-Basciani_2025,Italia,control,diet,menstrual_days,17,24,34,5.7407407407,28.5,3.5555555556,yes,28.2,0.9851851852,a
 Gudovic_2024,Serbia,intervention,myo_inositol_2000mg,insulin_uU_ml,26,30,17.5,8.9,13.2,4,no,21.9,2.9,a
 Gudovic_2024,Serbia,control,metformin_1500mg,insulin_uU_ml,26,30,19.1,8.3,12.9,4.9,no,21.6,2.5,a
 Gudovic_2024,Serbia,intervention,myo_inositol_2000mg,testosterone_ng_ml,26,30,0.8364,0.2884,0.5768,0.2884,no,21.9,2.9,a
@@ -96,9 +92,6 @@ Shokrpour_2019,Iran,control,metformin_1500mg,homa_ir,12,27,3.0,0.7,2.8,0.7,yes,2
 Donne_2019,Italia,intervention,myo_inositol_4000mg_plus_diet,bmi_kg_m2,26,10,32.4,5.5,29,4.4,yes,32.4,5.5,a
 Donne_2019,Italia,intervention,myo_inositol_1100mg_plus_d_chiro_inositol_27.6mg_plus_diet,bmi_kg_m2,26,13,31.8,6,28.2,5.4,yes,31.8,6,a
 Donne_2019,Italia,control,diet,bmi_kg_m2,26,21,31.9,5.2,28.6,3.7,yes,31.9,5.2,a
-Donne_2019,Italia,intervention,myo_inositol_4000mg_plus_diet,ferriman_gallwey,26,10,9.9,6.6,7.8,5.1,yes,32.4,5.5,a
-Donne_2019,Italia,intervention,myo_inositol_1100mg_plus_d_chiro_inositol_27.6mg_plus_diet,ferriman_gallwey,26,13,7.7,4.2,5.2,3.4,yes,31.8,6,a
-Donne_2019,Italia,control,diet,ferriman_gallwey,26,21,8.1,5.5,7,3.9,yes,31.9,5.2,a
 Mendoza_2019,España,intervention,myo_inositol_1100mg_plus_d_chiro_inositol_300mg,glucose_mg_dl,12,30,90.82,1.77,85.96,1.1,no,25.51,0.86,a
 Mendoza_2019,España,intervention,myo_inositol_1100mg_plus_d_chiro_inositol_27.6mg,glucose_mg_dl,12,30,91.85,2.48,86.62,1.51,no,24.88,0.69,a
 Mendoza_2019,España,intervention,myo_inositol_1100mg_plus_d_chiro_inositol_300mg,insulin_uU_ml,12,30,11.75,1.31,9.04,0.95,no,25.51,0.86,a
